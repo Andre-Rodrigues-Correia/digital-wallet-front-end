@@ -32,10 +32,9 @@ export function DepositCard() {
 
         if (state.success) {
             toast.success(state.message);
-            return;
+        } else {
+            toast.error(state.message);
         }
-
-        toast.error(state.message);
     }, [state]);
 
     return (

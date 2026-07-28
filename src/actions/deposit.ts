@@ -1,32 +1,27 @@
 'use server';
 
 import { cookies } from 'next/headers';
+
 import { revalidatePath } from 'next/cache';
 
 import { apiServer } from '@/lib/api-server';
-
-interface DepositState {
-    success: boolean;
-    message: string;
-}
+import { getErrorMessage } from '@/lib/get-error-message';
 
 export async function depositAction(
-    _: DepositState,
+    _: any,
     formData: FormData,
-): Promise<DepositState> {
-    const amount = Number(formData.get('amount'));
-
+) {
     try {
-        const token = (await cookies()).get('token')?.value;
+        const token = (await cookies()).get('token');
 
         await apiServer.post(
             '/transactions/deposit',
             {
-                amount,
+                amount: Number(formData.get('amount')),
             },
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${token?.value}`,
                 },
             },
         );
@@ -35,14 +30,12 @@ export async function depositAction(
 
         return {
             success: true,
-            message: 'Depósito realizado com sucesso!',
+            message: 'Depósito realizado com sucesso.',
         };
-    } catch (error: any) {
+    } catch (error) {
         return {
             success: false,
-            message:
-                error.response?.data?.message ??
-                'Erro ao realizar depósito.',
+            message: getErrorMessage(error),
         };
     }
 }

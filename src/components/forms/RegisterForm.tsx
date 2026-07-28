@@ -8,6 +8,7 @@ import { registerAction } from '@/actions/register';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {redirect} from "next/navigation";
 
 const initialState = {
     success: false,
@@ -21,7 +22,12 @@ export function RegisterForm() {
     useEffect(() => {
         if (!state.message) return;
 
-        toast.error(state.message);
+        if (state.success) {
+            toast.success(state.message);
+            redirect('/login')
+        } else {
+            toast.error(state.message);
+        }
     }, [state]);
 
     return (

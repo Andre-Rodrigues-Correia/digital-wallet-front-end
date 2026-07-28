@@ -1,49 +1,38 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { registerSchema } from '@/lib/register-schema';
 
 import { apiServer } from '@/lib/api-server';
-
-interface RegisterState {
-    success: boolean;
-    message: string;
-}
+import { getErrorMessage } from '@/lib/get-error-message';
 
 export async function registerAction(
-    _: RegisterState,
+    _: any,
     formData: FormData,
-): Promise<RegisterState> {
-    const name = formData.get('name')?.toString() ?? '';
-    const email = formData.get('email')?.toString() ?? '';
-    const password = formData.get('password')?.toString() ?? '';
+) {
+    const result = registerSchema.safeParse({
+        name: formData.get('name'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+    });
 
-    try {
-        console.log(name, email, password);
-        const response = await apiServer.post('/auth/register', {
-            name,
-            email,
-            password,
-        });
-
-        console.log({response});
-
-        const token = response.data.accessToken;
-
-        (await cookies()).set('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-        });
-
-        redirect('/dashboard');
-    } catch (error: any) {
+    if (!result.success) {
         return {
             success: false,
-            message:
-                error.response?.data?.message ??
-                'Erro ao criar conta.',
+            message: result.error.issues[0].message,
+        };
+    }
+
+    try {
+        await apiServer.post('/auth/register', result.data);
+
+        return {
+            success: true,
+            message: 'Conta criada com sucesso.',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: getErrorMessage(error),
         };
     }
 }
