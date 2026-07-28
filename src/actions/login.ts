@@ -1,41 +1,33 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 import { apiServer } from '@/lib/api-server';
+import { getErrorMessage } from '@/lib/get-error-message';
+import {redirect} from "next/navigation";
 
-interface LoginState {
-    success: boolean;
-    message: string;
-}
-
-export async function loginAction(_: LoginState, formData: FormData) {
-    const email = formData.get('email')?.toString() ?? '';
-    const password = formData.get('password')?.toString() ?? '';
-
+export async function loginAction(
+    _: any,
+    formData: FormData,
+) {
     try {
-        const response = await apiServer.post('/auth/login', {
+        const email = formData.get('email');
+        const password = formData.get('password');
+
+        const { data } = await apiServer.post('/auth/login', {
             email,
             password,
         });
 
-        const token = response.data.accessToken;
-
-        (await cookies()).set('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-        });
-    } catch (error: any) {
+        (await cookies()).set('token', data.accessToken);
+        return {
+            success: true,
+            message: 'Login realizado com sucesso.',
+        };
+    } catch (error) {
         return {
             success: false,
-            message:
-                error.response?.data?.message ??
-                'E-mail ou senha inválidos.',
+            message: getErrorMessage(error),
         };
     }
-
-    redirect('/dashboard');
 }

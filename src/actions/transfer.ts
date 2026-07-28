@@ -4,29 +4,38 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { apiServer } from '@/lib/api-server';
+import { getErrorMessage } from '@/lib/get-error-message';
 
-export async function transferAction(formData: FormData) {
-    const token = (await cookies()).get('token');
+export async function transferAction(
+    _: any,
+    formData: FormData,
+) {
+    try {
+        const token = (await cookies()).get('token');
 
-    if (!token) {
-        throw new Error('Unauthorized');
-    }
-
-    const accountNumber = formData.get('accountNumber')?.toString();
-    const amount = Number(formData.get('amount'));
-
-    await apiServer.post(
-        '/transactions/transfer',
-        {
-            accountNumber,
-            amount,
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${token.value}`,
+        await apiServer.post(
+            '/transactions/transfer',
+            {
+                accountNumber: formData.get('accountNumber'),
+                amount: Number(formData.get('amount')),
             },
-        },
-    );
+            {
+                headers: {
+                    Authorization: `Bearer ${token?.value}`,
+                },
+            },
+        );
 
-    revalidatePath('/dashboard');
+        revalidatePath('/dashboard');
+
+        return {
+            success: true,
+            message: 'Transferência realizada com sucesso.',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: getErrorMessage(error),
+        };
+    }
 }

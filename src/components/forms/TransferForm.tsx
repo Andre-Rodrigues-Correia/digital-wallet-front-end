@@ -1,35 +1,44 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
+
+import { ArrowRightLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { transferAction } from '@/actions/transfer';
 
 import {
     Card,
+    CardContent,
     CardHeader,
     CardTitle,
-    CardContent,
 } from '@/components/ui/card';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowRightLeft} from "lucide-react";
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
-
-    return (
-        <Button
-            type="submit"
-            className="w-full"
-            disabled={pending}
-        >
-            {pending ? 'Transferindo...' : 'Transferir'}
-        </Button>
-    );
-}
+const initialState = {
+    success: false,
+    message: '',
+};
 
 export function TransferForm() {
+    const [state, formAction, pending] = useActionState(
+        transferAction,
+        initialState,
+    );
+
+    useEffect(() => {
+        if (!state.message) return;
+
+        if (state.success) {
+            toast.success(state.message);
+            return;
+        }
+
+        toast.error(state.message);
+    }, [state]);
+
     return (
         <Card>
             <CardHeader>
@@ -41,22 +50,33 @@ export function TransferForm() {
 
             <CardContent>
                 <form
-                    action={transferAction}
+                    action={formAction}
                     className="space-y-4"
                 >
                     <Input
                         name="accountNumber"
                         placeholder="Conta destino"
+                        required
                     />
 
                     <Input
                         name="amount"
                         type="number"
                         step="0.01"
+                        min="0.01"
                         placeholder="Valor"
+                        required
                     />
 
-                    <SubmitButton />
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={pending}
+                    >
+                        {pending
+                            ? 'Transferindo...'
+                            : 'Transferir'}
+                    </Button>
                 </form>
             </CardContent>
         </Card>

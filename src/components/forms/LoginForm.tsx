@@ -8,6 +8,7 @@ import { loginAction } from '@/actions/login';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {redirect} from "next/navigation";
 
 const initialState = {
     success: false,
@@ -21,7 +22,12 @@ export function LoginForm() {
     useEffect(() => {
         if (!state.message) return;
 
-        toast.error(state.message);
+        if (state.success) {
+            toast.success(state.message);
+            redirect('/dashboard');
+        } else {
+            toast.error(state.message);
+        }
     }, [state]);
 
     return (
